@@ -1,5 +1,13 @@
 ORG 0h
-AJMP main
+LJMP main
+
+ORG 03h
+LJMP enterN
+
+ORG 0Bh
+LJMP payload ; timer interrup handler
+
+
 ORG 30h
 	
 CurTime EQU 030h
@@ -17,8 +25,21 @@ Tmp EQU 020h
 ;ArrayN EQU #1000d
 ;MaxN EQU #100d
 
+CurNPos EQU 039h
 
 main:
+CLR TF0
+CLR TR0
+MOV IE,#03h  ;enable TF0 and IT0 interrupt only
+MOV TMOD,#01h ; enable T0 16bit timer
+MOV TL0,#018h ;initial value
+MOV TH0,#0FCh ;initial value
+
+MOV CurN,#0h
+MOV CurNPos,#0h
+
+
+; Prepareing test sum
 MOV DPTR,#1000d
 MOV R1,#100d;
 _main1:
@@ -27,38 +48,45 @@ MOVX @DPTR,A
 INC DPTR
 DJNZ R1,_main1
 
-;summing
-;MOV R1,#0h
-;MOV R2,#21d
-
-;CALL sum_n
-
-
-;; dividing
-;MOV A,R3
-;MOV R1,A
-;MOV A,R4
-;MOV R2,A
-;MOV R3,#21d
-
-;CALL division
-
-;loop: JMP loop
-
-;=======================================
+; Seting test case
 MOV DurA,#9d
 MOV CurTime,#0d
 MOV CurN,#15d
+
+
+SETB TR0 ;enable timer0
+SETB EA ;enable interrupts
+
+; Infinite loop
+LJMP $
+	
+	
+enterN:
+MOV A,P4;
+ANL A,#0Fh
+MOV CurN,A
+MOV DPTR,#1000d
+
+MOV A,CurNPos
+MOV R1,A
+JZ _enter_next
+_enter_ptr_set:
+INC DPTR
+DJNZ R1, _enter_ptr_set
+_enter_next:
+MOV A,CurN
+MOVX @DPTR,A
+MOV A,CurNPos
+INC A
+CJNE A,#100d,_enter_end
+MOV A,#0h
+_enter_end:
+MOV CurNPos,A
+RETI	
+
+
 ;=======================================
-timer_interrupt:
-; each ms
-;  current time I:0x30
-;  STATE 0,1,3,7 (0,1) - HIGH, (3,7) - LOW I:0x31
-;  a1 first period time I:0x32
-;  current N I:0x33
-;  local time I:0x35
-;  b - captured N I:0x36
-;  c - averege 100 N I:0x37 (H) 0x38 (L)
+payload:
 
 MOV A,CurTime
 JNZ _timer_non_start
@@ -152,7 +180,14 @@ MOV LocTime,#0d
 CLR P4.0
 
 _timer_exit:
-RET
+MOV TL0,#018h ;initial value
+MOV TH0,#0FCh ;initial value
+CLR TF0
+RETI
+
+
+
+
 ;===============================
 sum_n:
 ; R1 offset
