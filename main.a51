@@ -1,18 +1,24 @@
-	ORG 0h
+	#define offset 00h
+
+	ORG 0h + offset
 	LJMP MAIN
 
-	ORG 03h
+	ORG 03h + offset
 	LJMP ENTER_N
 
-	ORG 0Bh
+	ORG 0Bh + offset
 	LJMP ON_TIMER ; timer interrupt handler
-	
-	ORG 0Fh
+
+	ORG 013h + offset
+	LJMP ENTER_A
+
+	ORG 01Bh + offset
 	LJMP ON_TIMER1 ; timer TF1
 
 
-	ORG 30h
-	
+
+	ORG 8030h
+
 	CurTime 	EQU 030h
 	State 		EQU 031h
 	DurA 		EQU 032h
@@ -23,10 +29,10 @@
 	DurCLow 	EQU 038h
 	P4 			EQU 0C0h
 	Tmp 		EQU 020h
-	;DurD 		EQU #50d
-	
-	;ArrayN 		EQU #1000d
-	;MaxN 		EQU #100d
+	#define DurD 	50d
+
+	#define ArrayN	1000d
+	#define MaxN	100d
 
 	CurNPos 	EQU 039h
 	IsStarted	EQU 03Ah
@@ -38,27 +44,28 @@ MAIN_INIT:
 	CLR 	TF0
 	CLR 	TR0
 	CLR		TR1
-	MOV 	IE, 	#10001011b  ;enable TF1 and TF0 and IT0 interrupt only
+	MOV 	IE, 	#10001111b  ;enable TF1 and TF0 and IT0 interrupt only
 	MOV 	TMOD, 	#00010001b ; enable  T1 and T0 16bit timer
 	MOV 	TL0, 	#018h ;initial value
 	MOV 	TH0, 	#0FCh ;initial value
-	
-	MOV		TL1, 	#00h 
+
+	MOV		TL1, 	#00h
 	MOV		TH1, 	#06h
-	
+
 	MOV 	TCON, #01h ; front
 
 	MOV 	CurN, 		#0h
 	MOV 	CurNPos, 	#0h
 	MOV		IsStarted, 	#0h
-	
+
 	LCALL	KEY_BOARD_INIT
+	LCALL 	DISPLAY_ENTER
 
 ;=================================
 	; Prepareing test sum
-	MOV		DPTR, #1000d
-	MOV		R1, #100d;
-	
+	MOV		DPTR, 	#ArrayN
+	MOV		R1, 	#MaxN
+
 _main1:
 
 	MOV 	A, #0Fh
@@ -67,9 +74,9 @@ _main1:
 	DJNZ 	R1, _main1
 
 	; Seting test case
-	MOV		DurA, #9d
-	MOV 	CurTime, #0d
-	MOV 	CurN, #15d
+	MOV		DurA, 		#9d
+	MOV 	CurTime, 	#0d
+	MOV 	CurN, 		#15d
 ;====================================
 
 	SETB 	TR0 ;enable timer0
@@ -77,15 +84,15 @@ _main1:
 
 	; Infinite loop
 	LJMP 	$
-		
-DISPLAY_ENTER:		
+
+DISPLAY_ENTER:
 	LCALL 	DISPLAY_CLEAR
 	MOV 	R4, #042h 				;B
 	LCALL 	DISPLAY
 	MOV 	R4, #0B3h				;в
 	LCALL 	DISPLAY
 	MOV 	R4, #065h				;е
-	LCALL 	DISPLAY						
+	LCALL 	DISPLAY
 	MOV 	R4, #0E3h				;д
 	LCALL	DISPLAY
 	MOV		R4, #05Fh				;_
@@ -93,17 +100,19 @@ DISPLAY_ENTER:
 	MOV		R4, #041h				;A
 	LCALL	DISPLAY
 	RET
-	
+
 DISPLAY_WORKING:
 	LCALL 	DISPLAY_CLEAR
 	SETB 	TR1
 	RET
-	
+
 ENTER_A:
 	MOV		DurA,#10h
+	MOV R4,#38h
+	LCALL DISPLAY2
 	RET
-	
-	
+
+
 ENTER_N:
 	MOV 	A, P4;
 	ANL 	A, #0Fh
@@ -113,12 +122,12 @@ ENTER_N:
 	MOV 	A, CurNPos
 	MOV 	R1, A
 	JZ 		_enter_next
-	
+
 _enter_ptr_set:
 
 	INC 	DPTR
 	DJNZ 	R1,  _enter_ptr_set
-	
+
 _enter_next:
 
 	MOV 	A, CurN
@@ -127,11 +136,11 @@ _enter_next:
 	INC 	A
 	CJNE 	A, #100d, _enter_end
 	MOV 	A, #0h
-	
+
 _enter_end:
 
 	MOV 	CurNPos, A
-	RETI	
+	RETI
 
 
 ;=======================================
@@ -141,22 +150,22 @@ ON_TIMER1:
 	CJNE	A, #07h, _timer1_inc
 	MOV		A, Timer1L
 	CJNE	A, #0D0h, _timer1_inc
-	
+
 	CLR		TR1
 	LCALL	ENTER_A
 	LCALL	DISPLAY_WORKING
 	SETB	TR0
 	LJMP	TIMER1_EXIT
-	
+
 _timer1_inc:
 	CLR		C
 	INC 	Timer1L
 	JNC		TIMER1_EXIT
 	INC		Timer1H
-	
-TIMER1_EXIT:	
+
+TIMER1_EXIT:
 	RETI
-	
+
 
 
 ;=======================================
@@ -196,13 +205,13 @@ _timer_state_2:
 	MOV 	LocTime, #0h
 	;calculating average
 	MOV 	R1, #0h
-	MOV 	R2, #100d
+	MOV 	R2, #MaxN
 	LCALL 	SUM_N
 	MOV 	A, R3
 	MOV 	R1, A
 	MOV 	A, R4
 	MOV 	R2, A
-	MOV 	R3, #100d
+	MOV 	R3, #MaxN
 	LCALL 	DIVIDE
 	MOV 	DurCHigh, R4
 	MOV 	DurCLow, R5
@@ -236,7 +245,7 @@ _timer_res:
 	MOV 	A, State
 	ANL 	A, #1d
 	MOV 	Tmp, A
-	JNB 	Tmp.1,  _timer_res_0	
+	JNB 	Tmp.1,  _timer_res_0
 
 _timer_res_0:
 	CLR 	P4.0
@@ -248,7 +257,7 @@ _timer_res_1:
 
 _timer_inc:
 	MOV 	A, CurTime
-	CJNE 	A, #50d, _timer_clear
+	CJNE 	A, #DurD, _timer_clear
 	INC 	CurTime
 	INC 	LocTime
 	LJMP 	_timer_exit
@@ -260,8 +269,8 @@ _timer_clear:
 
 _timer_exit:
 	RETI
-	
-	
+
+
 
 SUM_N:
 ; R1 offset
@@ -272,7 +281,7 @@ SUM_N:
 	MOV 	R3, #0h
 	MOV 	R4, #0h
 	MOV 	R5, #0h
-	MOV 	DPTR, #1000d
+	MOV 	DPTR, #ArrayN
 
 
 ;setting offset
@@ -345,7 +354,7 @@ _d2:
 ;===========================
 
 		PUBLIC 		KEY_BOARD_INIT
-	PUBLIC		KEY_READ	
+	PUBLIC		KEY_READ
 
 
 
@@ -361,16 +370,16 @@ KEY_BOARD_INIT:
 	MOVX 		@DPTR,A ;разрешение записи в видеопамять с автоинкрементированием адреса
 
 	RET
-	
-	
-KEY_READ:	
+
+
+KEY_READ_AND_DISPLAY:
 ; R0 has readed value
 	MOV 		DPTR,#7FFFh
 	MOV 		A,#40h
 	MOVX 		@DPTR,A ;разрешение чтения FIFO клавиатуры
 	MOV 		DPTR,#7FFEh
 	MOVX 		A,@DPTR ;чтение скан-кода
-	
+
 K0:
 	CJNE 		A, #11011001B, K1;проверка скан-кода клавиши «0»
 	MOV 		R0,#0h
@@ -378,8 +387,8 @@ K0:
 	MOV 		A,#11110011b
 	MOVX 		@DPTR,A ;вывод в видеопамять кода символа «0»
 	LJMP 		EXIT
-	
-	
+
+
 K1:
 	CJNE 		A, #11000000B, K2 ;проверка скан-кода клавиши «1»
 	MOV 		DPTR,#7FFEh
@@ -453,7 +462,7 @@ K9:
 	LJMP 		EXIT
 
 K10:
-	CJNE 		A,#11000011B,K11; клавиши «A»
+	CJNE 		A,#11000011B, K11; клавиши «A»
 	MOV			R0,#0Ah
 	MOV 		DPTR,#7FFEh
 	MOV 		A,#01110111b
@@ -501,7 +510,7 @@ K15:
 
 EXIT:
 	RET
-	
+
 
 	PUBLIC	DISPLAY
 
@@ -519,13 +528,18 @@ DISPLAY:
 	LCALL 	DINIT
 	MOV 	A,#06H ;сдвиг курсора вправо после вывода символа
 	LCALL 	DINIT
-	MOV 	A,#02H
-	LCALL 	DINIT
-	;LCALL 	DISPLAY_CLEAR
 	MOV 	A,R4 ;код символа из R4 в аккумулятор
 	LCALL 	DISP ;вызов подпрограммы записи кода символа в регистр данных дисплея
 	RET
 ;------------------------------------------------------------------------------------------
+
+DISPLAY2:
+	;код символа в R4
+	MOV 	A,#10000000b + 028h;
+	LCALL 	DINIT
+	MOV 	A,R4 ;код символа из R4 в аккумулятор
+	LCALL 	DISP ;вызов подпрограммы записи кода символа в регистр данных дисплея
+	RET
 
 DISPLAY_CLEAR:
 	MOV 	A,#01H ;очистка дисплея
