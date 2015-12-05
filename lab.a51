@@ -42,6 +42,7 @@ MAIN:
 
     LCALL   DISPLAY_ENTER
     LCALL   TEST_SUM
+    LCALL   CLEAR_ARRAY
 
     SETB     EA ;enable interrupts
     LJMP     $ ; Infinite loop
@@ -85,7 +86,22 @@ TEST_SUM_CYCLE_:
     MOV     CurTime,#0d
     MOV     CurN,   #15d
     RET
-    
+
+;-------------------------------------------------------------------------------
+; Prepareing test sum
+;-------------------------------------------------------------------------------
+CLEAR_ARRAY:
+    MOV     DPTR,   #ArrayN
+    MOV     R1,     #MaxN
+
+CLEAR_ARRAY_CYCLE_:
+    MOV     A,      #0h
+    MOVX    @DPTR,  A
+    INC     DPTR
+    DJNZ    R1,     CLEAR_ARRAY_CYCLE_
+
+    RET
+
 ;-------------------------------------------------------------------------------
 ; Init timer0
 ;-------------------------------------------------------------------------------
@@ -216,6 +232,7 @@ ACCEPT_A:
     
     LCALL   DISPLAY_WORKING
     LCALL   TIMER1_START
+    LCALL   CLEAR_ARRAY
     RET
 
 ;-------------------------------------------------------------------------------
