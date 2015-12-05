@@ -1,10 +1,10 @@
-	#define offset 00h
+	#define offset 8000h
 
 	ORG 0h + offset
 	LJMP MAIN
 
 	ORG 03h + offset
-	LJMP ENTER_N ;INT0
+	LJMP ENTER_N 			 ; INT0
 
 	ORG 0Bh + offset
 	LJMP ON_TIMER ; TR0
@@ -101,8 +101,7 @@ TIMER1_START:
 	MOV		TL1, 		#00h
 	MOV     TH1, 		#06h
 	CLR		TF1
-	MOV 	Timer1H, 	#07h
-	MOV 	Timer1L, 	#0D0h
+	MOV 	Timer1L, 	#020d
 	SETB    TR1
 	RET
 
@@ -147,8 +146,17 @@ DISPLAY_WORKING:
 	LCALL 	DISPLAY
 	RET
 
+DISPLAY_PR:
+	LCALL 	DISPLAY_CLEAR
+	MOV 	R4, #0A8h 				;П
+	LCALL 	DISPLAY
+	MOV 	R4, #070h 				;р
+	LCALL 	DISPLAY
+	RET
+
 
 ENTER_N:
+    LCALL	DISPLAY_PR
 	MOV 	A, P4;
 	ANL 	A, #030h
 
@@ -206,13 +214,6 @@ ON_TIMER1:
 	MOV   	TH1, #06h
 	CLR		TF1
 	DJNZ	Timer1L, TIMER1_EXIT
-	MOV		Timer1L, #0D0h
-	DJNZ	Timer1H, TIMER1_EXIT
-	
-	;MOV		A, Timer1H
-	;CJNE	A, #07h, _timer1_inc
-	;MOV		A, Timer1L
-	;CJNE	A, #0D0h, _timer1_inc
 	
 
 	CLR		TR1
@@ -224,12 +225,6 @@ ON_TIMER1:
 	SETB  	EX1 ; enable INT1
 	SETB	TR0 ; enable on_timer
 	LJMP	TIMER1_EXIT
-
-_timer1_inc:
-	;CLR		C
-	;ADDC 	Timer1L
-	;JNC		TIMER1_EXIT
-	;INC		Timer1H
 
 TIMER1_EXIT:
 	RETI
@@ -426,8 +421,6 @@ _d2:
 
 
 KEY_BOARD_INIT:
-	IEN0 EQU 	0A8h
-	MOV 		IEN0, #84h
 	MOV 		DPTR,#7FFFh
 	MOV 		A,#01h
 	MOVX 		@DPTR,A ;ввод символа слева, декодированный режим
@@ -459,14 +452,14 @@ K1:
 	CJNE 		A, #11000000B, K2 ;проверка скан-кода клавиши «1»
 	MOV 		DPTR,#7FFEh
 	MOV			R4,#031h
-  LCALL   DISPLAY2
+	LCALL   DISPLAY2
 	LJMP 		EXIT
 
 K2:
 	CJNE 		A, #11000001B, K3 ;проверка скан-кода клавиши «2»
 	MOV			R0,#2h
 	MOV			R4,#032h
-  LCALL   DISPLAY2
+	LCALL   DISPLAY2
 	LJMP 		EXIT
 
 K3:
@@ -550,12 +543,13 @@ K15:
 	CLR     EX1 ;disbale INT1
 	CLR     EX0 ;disable INT0
 	CLR     TR0 ;disable TR0
-	CLR			P4.6
+	CLR		TR1
 
 	LCALL   DISPLAY_WORKING
 	LCALL	TIMER1_START
 	MOV     A, TmpDurA
 	MOV     DurA, A
+	CLR		Result
 	RETI
 
 EXIT:
