@@ -117,7 +117,8 @@ K15:
 	CJNE 		A, #11011010B, EXIT ;проверка скан-кода клавиши «#»
 	MOV			R0,#0Fh
 	MOV			R4,#023h
-  LCALL   ACCEPT_A
+    LCALL       DISPLAY2
+    LCALL       ACCEPT_A
 	RETI
 
 EXIT:

@@ -1,9 +1,7 @@
 ;=======================================
 ON_TIMER0:
 
-	MOV 	TL0, #018h ;initial value
-	MOV 	TH0, #0FCh ;initial value
-	CLR 	TF0
+	LCALL   INIT_TIMER0
 
 	MOV 	A, CurTime
 	JNZ 	_timer_non_start

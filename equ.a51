@@ -24,3 +24,5 @@
 	N_Low		EQU P4.4
 	TMP_N		EQU 03Eh
 	TMP_N_2		EQU 03Fh
+	
+	#define DispDelay 20d
