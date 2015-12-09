@@ -3,17 +3,11 @@ ON_TIMER0:
 
 	LCALL   INIT_TIMER0
 
-	MOV 	A, CurTime
-	;MOV 	CurTime, #0h
-	;MOV 	State, #1h
-	MOV 	DurB, CurN
-	
-
 	MOV 	R4, LocTime
 	MOV 	R7, State
 	MOV 	A, R4
-	CJNE 	A, DurA, _timer_state_2
-	CJNE 	R7, #0d, _timer_state_2
+    CJNE 	R7, #1d, _timer_state_2
+	CJNE 	A, DurA, _timer_res
 	MOV 	State, #2h
 	MOV 	LocTime, #0h
 	MOV 	DurB, CurN
@@ -24,8 +18,8 @@ _timer_state_2:
 	MOV 	R4, LocTime
 	MOV 	R7, State
 	MOV 	A, R4
-	CJNE 	A, DurB, _timer_state_3
-	CJNE 	R7, #1d, _timer_state_3
+    CJNE 	R7, #2h, _timer_state_3
+	CJNE 	A, DurB, _timer_res
 	MOV 	State, #4h
 	MOV 	LocTime, #0h
 	;calculating average
@@ -46,31 +40,25 @@ _timer_state_3:
 	MOV 	R4, LocTime
 	MOV 	R7, State
 	MOV 	A, R4
+    CJNE 	R7, #4h, _timer_res
 	CJNE 	A, DurCLow, _timer_res
-	CJNE 	R7, #4h, _timer_res
 	MOV 	State, #8h
 	MOV 	LocTime, #0h
 	LJMP 	_timer_res
 
 _timer_res:
-	MOV 	A, State
-	ANL 	A, #2d
-	MOV 	Tmp, A
-	JB 		Tmp.1,  _timer_res_1
-
-	MOV 	A, State
-	ANL 	A, #8d
-	MOV 	Tmp, A
-	JB 		Tmp.4,  _timer_res_1
-
-	MOV 	A, State
-	ANL 	A, #2d
-	JB 		Tmp.2,  _timer_res_0
-
-	MOV 	A, State
-	ANL 	A, #1d
-	MOV 	Tmp, A
-	JNB 	Tmp.1,  _timer_res_0
+    MOV     R7, State
+    CJNE    R7, #2h, _tim1
+    LJMP    _timer_res_1
+    _tim1:
+    CJNE    R7, #8h, _tim2
+    LJMP    _timer_res_1
+    _tim2:
+    CJNE    R7, #1h, _tim3
+    LJMP    _timer_res_0
+    _tim3:
+    CJNE    R7, #4h, _timer_res_0
+    LJMP    _timer_res_0
 
 _timer_res_0:
 	CLR 	Result
@@ -95,9 +83,4 @@ _timer_clear:
 	CLR 	Result
 
 _timer_exit:
-	;MOV		A, State
-	;ADD		A,#30h
-	;MOV		R4,A
-	;LCALL	DISPLAY2
-
 	RETI

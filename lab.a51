@@ -19,7 +19,7 @@
     ORG 01Bh + offset
     LJMP ON_TIMER1 ; TR1
 
-    ORG 0100h + offset
+    ORG 030h + offset
 ;*******************************************************************************
 ; include section
 ;*******************************************************************************
@@ -46,13 +46,8 @@ MAIN:
     LCALL   CLEAR_ARRAY
 
     SETB     EA ;enable interrupts
-	MOV		 SP,50h
-	tmptmp:
-	;MOV		A, TCON
-	;ADD		A,#40h
-	;MOV 	R4,A
-	;LCALL 	DISPLAY2
-    LJMP     tmptmp ; Infinite loop
+	;MOV		 SP,50h
+	LJMP    $
 ;*******************************************************************************
 
 
@@ -68,7 +63,7 @@ MAIN_INIT:
     MOV     IE,       #00001111b  ;enable ET1 and ET0 and EX0 and EX1
     MOV     TCON,     #00000101b ; front 10 IT1 IT0
     MOV     TMOD,     #00010001b ; enable  T1 and T0 16bit timer
-	MOV 	P4,		  #11111111b
+	MOV 	P4,		  #11110000b
 
 
     LCALL   INIT_TIMER0
@@ -222,23 +217,23 @@ DISPLAY_ACCEPT_N:
     MOV     A, CurN
     ADD     A, #30h
 	CJNE	A, #3Ah, DSN1
-	LJMP	PLUS5
+	LJMP	PLUS7
 	DSN1:
 	CJNE	A, #3Bh, DSN2
-	LJMP	PLUS5
+	LJMP	PLUS7
 	DSN2:
 	CJNE	A, #3Ch, DSN3
-	LJMP	PLUS5
+	LJMP	PLUS7
 	DSN3:
 	CJNE	A, #3Dh, DSN4
-	LJMP	PLUS5
+	LJMP	PLUS7
 	DSN4:
 	CJNE	A, #3Eh, DSN5
-	LJMP	PLUS5
+	LJMP	PLUS7
 	DSN5:
 	CJNE	A, #3Fh, DSN6
-	LJMP	PLUS5
-	PLUS5:
+	LJMP	PLUS7
+	PLUS7:
 	ADD		A,#7h
 	DSN6:
     MOV     R4, A
