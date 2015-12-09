@@ -4,15 +4,11 @@ ON_TIMER0:
 	LCALL   INIT_TIMER0
 
 	MOV 	A, CurTime
-	JNZ 	_timer_non_start
-	MOV 	CurTime, #0h
-	MOV 	State, #1h
-	MOV 	DurB, #0Fh
-	CLR		Impulse
+	;MOV 	CurTime, #0h
+	;MOV 	State, #1h
+	MOV 	DurB, CurN
+	
 
-_timer_non_start:
-
-_timer_state_1:
 	MOV 	R4, LocTime
 	MOV 	R7, State
 	MOV 	A, R4
@@ -51,7 +47,7 @@ _timer_state_3:
 	MOV 	R7, State
 	MOV 	A, R4
 	CJNE 	A, DurCLow, _timer_res
-	CJNE 	R7, #3h, _timer_res
+	CJNE 	R7, #4h, _timer_res
 	MOV 	State, #8h
 	MOV 	LocTime, #0h
 	LJMP 	_timer_res
@@ -94,8 +90,14 @@ _timer_inc:
 _timer_clear:
 	MOV 	CurTime, #0d
 	MOV 	LocTime, #0d
-	CLR 	Result
 	SETB	Impulse
+	CLR 	Impulse
+	CLR 	Result
 
 _timer_exit:
+	;MOV		A, State
+	;ADD		A,#30h
+	;MOV		R4,A
+	;LCALL	DISPLAY2
+
 	RETI

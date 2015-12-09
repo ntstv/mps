@@ -5,20 +5,21 @@
 
     ORG 0h + offset
     LJMP MAIN
-
-    ORG 03h + offset
-    LJMP ENTER_N              ; INT0
-
+	
+	ORG 03h + offset
+    LJMP ENTER_N ; INT0
+	
     ORG 0Bh + offset
     LJMP ON_TIMER0 ; TR0
-
+	
     ORG 013h + offset
     LJMP KEY_READ_AND_DISPLAY ; INT1
+
 
     ORG 01Bh + offset
     LJMP ON_TIMER1 ; TR1
 
-    ORG 030h + offset
+    ORG 0100h + offset
 ;*******************************************************************************
 ; include section
 ;*******************************************************************************
@@ -45,7 +46,13 @@ MAIN:
     LCALL   CLEAR_ARRAY
 
     SETB     EA ;enable interrupts
-    LJMP     $ ; Infinite loop
+	MOV		 SP,50h
+	tmptmp:
+	;MOV		A, TCON
+	;ADD		A,#40h
+	;MOV 	R4,A
+	;LCALL 	DISPLAY2
+    LJMP     tmptmp ; Infinite loop
 ;*******************************************************************************
 
 
@@ -61,6 +68,7 @@ MAIN_INIT:
     MOV     IE,       #00001111b  ;enable ET1 and ET0 and EX0 and EX1
     MOV     TCON,     #00000101b ; front 10 IT1 IT0
     MOV     TMOD,     #00010001b ; enable  T1 and T0 16bit timer
+	MOV 	P4,		  #11111111b
 
 
     LCALL   INIT_TIMER0
@@ -127,7 +135,7 @@ INIT_TIMER1:
 TIMER0_START:
     LCALL   INIT_TIMER0
     CLR     TF0
-    SETB    TR1
+    SETB    TR0
     RET
 
 
@@ -137,7 +145,7 @@ TIMER0_START:
 TIMER1_START:
     LCALL   INIT_TIMER1
     CLR     TF1
-    MOV     Timer1L, #020d
+    MOV     Timer1L, #DispDelay
     SETB    TR1
     RET
 
@@ -212,7 +220,27 @@ DISPLAY_ACCEPT_N:
     MOV     R4, #04Eh                 ;N
     LCALL     DISPLAY
     MOV     A, CurN
-    ADD     A, #30
+    ADD     A, #30h
+	CJNE	A, #3Ah, DSN1
+	LJMP	PLUS5
+	DSN1:
+	CJNE	A, #3Bh, DSN2
+	LJMP	PLUS5
+	DSN2:
+	CJNE	A, #3Ch, DSN3
+	LJMP	PLUS5
+	DSN3:
+	CJNE	A, #3Dh, DSN4
+	LJMP	PLUS5
+	DSN4:
+	CJNE	A, #3Eh, DSN5
+	LJMP	PLUS5
+	DSN5:
+	CJNE	A, #3Fh, DSN6
+	LJMP	PLUS5
+	PLUS5:
+	ADD		A,#7h
+	DSN6:
     MOV     R4, A
     LCALL      DISPLAY2
     RET
@@ -221,18 +249,18 @@ DISPLAY_ACCEPT_N:
 ; Accepts A
 ;-------------------------------------------------------------------------------
 ACCEPT_A:
-    CLR     EX1 ;disbale INT1
+    ;CLR     EX1 ;disbale INT1
     CLR     EX0 ;disable INT0
     LCALL   TIMER0_STOP
-    
-    
-    MOV     A, TmpDurA
-    MOV     DurA, A
     
     
     LCALL   DISPLAY_WORKING
     LCALL   TIMER1_START
     LCALL   CLEAR_ARRAY
+	MOV		A,TmpDurA
+	SUBB	A,#30h
+	
+	MOV		DurA, A
     RET
 
 ;-------------------------------------------------------------------------------
@@ -256,24 +284,29 @@ TIMER0_STOP:
 ; Enters N (INT0 handler)
 ;*******************************************************************************
 ENTER_N:
-    CLR     EX1
+    ;CLR     EX1
     MOV     A, P4;
     ANL     A, #030h
 
-    DJNZ    TMP_N_2, MEMO_N_
-    LJMP    ENTER_N_
+    MOV		R7, TMP_N_2
+	ENTER_N2:
+	CJNE	R7, #2h, ENTER_N1;
+	LJMP	MEMO_N_;
+	ENTER_N1:
+    LJMP    MEMO_N_2_
 
 MEMO_N_:
-    MOV     R7, TMP_N_2
-    CJNE    R7, #1h, MEMO_N_2_
+    DEC		TMP_N_2
+	CLR		C
     RR      A
     RR      A
     RR      A
     RR      A
     MOV     TMP_N, A
-    RETI
+    LJMP 	ENTER_EX
 
 MEMO_N_2_:
+	CLR		C
     RR      A
     RR      A
     ADD     A, TMP_N
@@ -307,7 +340,9 @@ ENTER_NEXT_:
 ENTER_END_:
 
     MOV     CurNPos, A
-    SETB    EX1
+    ;SETB    EX1
+	
+	ENTER_EX:	
     RETI
 
 

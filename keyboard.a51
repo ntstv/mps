@@ -29,6 +29,7 @@ K0:
 K1:
 	CJNE 		A, #11000000B, K2 ;проверка скан-кода клавиши «1»
 	MOV 		DPTR,#7FFEh
+	MOV 		R0,#0h
 	MOV			R4,#031h
 	LCALL   DISPLAY2
 	LJMP 		EXIT
@@ -111,6 +112,7 @@ K13:
 
 K14:
 	CJNE 		A, #11011000B, K15 ;проверка скан-кода клавиши «*»
+	LCALL		ENTER_N
 	RETI
 
 K15:

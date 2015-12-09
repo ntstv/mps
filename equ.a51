@@ -10,7 +10,7 @@
 	Tmp 		EQU 020h
 	#define DurD 	50d
 
-	#define ArrayN	1000d
+	#define ArrayN	6000h
 	#define MaxN	100d
 
 	CurNPos 	EQU 039h
