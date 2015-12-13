@@ -19,7 +19,7 @@
     ORG 01Bh + offset
     LJMP ON_TIMER1 ; TR1
 
-    ORG 030h + offset
+    ;ORG 0100h + offset
 ;*******************************************************************************
 ; include section
 ;*******************************************************************************
@@ -46,7 +46,7 @@ MAIN:
     LCALL   CLEAR_ARRAY
 
     SETB     EA ;enable interrupts
-	;MOV		 SP,50h
+	MOV		 SP,50h
 	LJMP    $
 ;*******************************************************************************
 
@@ -79,15 +79,17 @@ TEST_SUM:
     MOV     R1,     #MaxN
 
 TEST_SUM_CYCLE_:
-    MOV     A,      #0Fh
+    MOV     A,      #0h
     MOVX    @DPTR,  A
     INC     DPTR
     DJNZ    R1,     TEST_SUM_CYCLE_
 
     ; Seting test case
-    MOV     DurA,   #9d
-    MOV     CurTime,#0d
-    MOV     CurN,   #15d
+    MOV     DurA,   #10d
+    MOV     CurTime,#0h
+	MOV		LocTime,#0h
+    MOV     CurN,   #0h
+	MOV		State, #1h
     RET
 
 ;-------------------------------------------------------------------------------
